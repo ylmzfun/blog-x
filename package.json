@@ -1,0 +1,7 @@
+{
+  "name": "blog-rail",
+  "packageManager": "yarn@4.6.0",
+  "dependencies": {
+    "rails_admin": "3.3.0"
+  }
+}

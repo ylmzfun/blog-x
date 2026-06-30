@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle *)",
+      "Bash(bin/rails *)",
+      "Bash(mkdir *)",
+      "Bash(rm *)",
+      "Bash(sleep *)",
+      "Bash(curl *)",
+      "Bash(python3 *)",
+      "Bash(kill *)",
+      "Bash(tail *)",
+      "Bash(sed *)",
+      "Bash(pkill *)"
+    ]
+  },
+  "$version": 4
+}

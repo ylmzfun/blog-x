@@ -1,0 +1,22 @@
+<% content_for :title, @post.title %>
+
+<div class="blog-container">
+  <header class="blog-header">
+    <h1><%= link_to "Blog Rail", root_path %></h1>
+  </header>
+
+  <main>
+    <article class="post-full">
+      <h2><%= @post.title %></h2>
+      <time class="post-meta" datetime="<%= @post.created_at.iso8601 %>">
+        <%= @post.created_at.strftime("%B %d, %Y") %>
+      </time>
+      <div class="post-body">
+        <%= simple_format(@post.content) %>
+      </div>
+      <div class="post-nav">
+        <%= link_to "← Back to posts", root_path %>
+      </div>
+    </article>
+  </main>
+</div>
