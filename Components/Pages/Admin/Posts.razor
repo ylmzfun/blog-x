@@ -1,0 +1,106 @@
+@page "/admin/posts"
+@page "/admin/posts/{Status}"
+@using System.Net.Http.Json
+@using blog_csharp.DTOs
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Post Management</PageTitle>
+
+@code {
+    [Parameter] public string? Status { get; set; }
+
+    private List<PostListItem> posts = new();
+    private int total, page = 1;
+    private const int pageSize = 10;
+
+    protected override async Task OnInitializedAsync() => await LoadPosts();
+
+    private async Task LoadPosts()
+    {
+        var url = Status == "drafts"
+            ? $"api/posts/drafts?page={page}&pageSize={pageSize}"
+            : $"api/posts?page={page}&pageSize={pageSize}";
+        try
+        {
+            var res = await Http.GetFromJsonAsync<ApiResponse<PagedData<PostListItem>>>(url);
+            if (res?.Data != null)
+            {
+                posts = res.Data.List;
+                total = res.Data.Total;
+            }
+        }
+        catch { }
+    }
+
+    private async Task DeletePost(string id)
+    {
+        try
+        {
+            await Http.DeleteAsync($"api/posts/{id}");
+            await LoadPosts();
+        }
+        catch { }
+    }
+
+    private async Task ChangePage(int p) { page = p; await LoadPosts(); }
+}
+
+<h2>Post Management</h2>
+<div class="mb-3">
+    <a href="/admin/posts/new" class="btn btn-success me-2">New Post</a>
+    <a href="/admin/posts" class="btn btn-outline-primary me-2 @(Status == null ? "active" : "")">All</a>
+    <a href="/admin/posts/drafts" class="btn btn-outline-secondary @(Status == "drafts" ? "active" : "")">Drafts</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Views</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in posts)
+            {
+                <tr>
+                    <td>
+                        @if (p.Pinned) { <span class="badge bg-warning text-dark me-1">Pin</span> }
+                        <a href="/post/@p.Slug">@p.Title</a>
+                    </td>
+                    <td>@p.Author?.Username</td>
+                    <td>@p.Category?.Name</td>
+                    <td>
+                        <span class="badge @(p.Status == "published" ? "bg-success" : "bg-secondary")">@p.Status</span>
+                    </td>
+                    <td>@p.ViewCount</td>
+                    <td>@p.PublishedAt?.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        <a href="/admin/posts/@p.Id/edit" class="btn btn-sm btn-primary me-1">Edit</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeletePost(p.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (total > pageSize)
+{
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="() => ChangePage(page - 1)">Previous</button>
+            </li>
+            <li class="page-item @(page * pageSize >= total ? "disabled" : "")">
+                <button class="page-link" @onclick="() => ChangePage(page + 1)">Next</button>
+            </li>
+        </ul>
+    </nav>
+}

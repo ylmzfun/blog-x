@@ -1,0 +1,66 @@
+@page "/admin/stats"
+@using System.Net.Http.Json
+@using blog_csharp.DTOs
+@inject HttpClient Http
+
+<PageTitle>Statistics</PageTitle>
+
+@code {
+    private StatsOverview? stats;
+    private List<TopPost> topPosts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var res = await Http.GetFromJsonAsync<ApiResponse<StatsOverview>>("api/stats/overview");
+            if (res?.Data != null) stats = res.Data;
+        }
+        catch { }
+        try
+        {
+            var res = await Http.GetFromJsonAsync<ApiResponse<List<TopPost>>>("api/stats/posts/top");
+            if (res?.Data != null) topPosts = res.Data;
+        }
+        catch { }
+    }
+}
+
+<h2>Statistics</h2>
+
+@if (stats != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body"><h3>@stats.TotalPosts</h3><small>Total Posts</small></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body"><h3>@stats.TotalComments</h3><small>Total Comments</small></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body"><h3>@stats.TotalUsers</h3><small>Total Users</small></div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (topPosts.Count > 0)
+{
+    <div class="card">
+        <div class="card-header fw-bold">Top 10 Posts by Views</div>
+        <div class="list-group list-group-flush">
+            @foreach (var p in topPosts)
+            {
+                <div class="list-group-item d-flex justify-content-between">
+                    <a href="/post/@p.Slug">@p.Title</a>
+                    <span class="badge bg-primary">@p.ViewCount</span>
+                </div>
+            }
+        </div>
+    </div>
+}

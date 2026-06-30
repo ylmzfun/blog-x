@@ -1,0 +1,25 @@
+@using blog_csharp.DTOs
+
+<div class="card mb-2 @(Item.ParentId != null ? "ms-4" : "")">
+    <div class="card-body py-2">
+        <div class="d-flex justify-content-between">
+            <strong>@Item.Author?.Username</strong>
+            <small class="text-muted">@Item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+        </div>
+        @if (Item.ReplyTo != null)
+        {
+            <small class="text-muted">↳ @Item.ReplyTo.Username</small>
+        }
+        <p class="mt-1 mb-1">@Item.Content</p>
+        <button class="btn btn-sm btn-link p-0" @onclick="() => OnReply.Invoke(Item.Id)">Reply</button>
+        @foreach (var reply in Item.Replies)
+        {
+            <CommentNode Item="reply" OnReply="OnReply" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public CommentItem Item { get; set; } = default!;
+    [Parameter] public Action<string> OnReply { get; set; } = default!;
+}

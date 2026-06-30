@@ -1,0 +1,79 @@
+@page "/tag/{Slug}"
+@using System.Net.Http.Json
+@using blog_csharp.DTOs
+@inject HttpClient Http
+
+<PageTitle>Tag</PageTitle>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private List<PostListItem> posts = new();
+    private int total, page = 1;
+    private const int pageSize = 10;
+    private string tagName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPosts();
+    }
+
+    private async Task LoadPosts()
+    {
+        try
+        {
+            var res = await Http.GetFromJsonAsync<ApiResponse<PagedData<PostListItem>>>(
+                $"api/posts?page={page}&pageSize={pageSize}&tagSlug={Slug}");
+            if (res?.Data != null)
+            {
+                posts = res.Data.List;
+                total = res.Data.Total;
+                if (posts.Count > 0)
+                {
+                    var firstTag = posts[0].Tags.FirstOrDefault(t => t.Slug == Slug);
+                    if (firstTag != null) tagName = firstTag.Name;
+                }
+            }
+        }
+        catch { }
+    }
+
+    private async Task ChangePage(int p) { page = p; await LoadPosts(); }
+}
+
+<h2>Tag: @tagName</h2>
+
+@foreach (var post in posts)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">
+                <a href="/post/@post.Slug" class="text-decoration-none">@post.Title</a>
+            </h5>
+            @if (!string.IsNullOrEmpty(post.Summary))
+            {
+                <p class="card-text text-muted">@post.Summary</p>
+            }
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    By @post.Author?.Username · @post.PublishedAt?.ToString("yyyy-MM-dd")
+                </small>
+                <small class="text-muted">👁 @post.ViewCount · 💬 @post.CommentCount</small>
+            </div>
+        </div>
+    </div>
+}
+
+@if (total > pageSize)
+{
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="() => ChangePage(page - 1)">Previous</button>
+            </li>
+            <li class="page-item @(page * pageSize >= total ? "disabled" : "")">
+                <button class="page-link" @onclick="() => ChangePage(page + 1)">Next</button>
+            </li>
+        </ul>
+    </nav>
+}

@@ -1,0 +1,144 @@
+@page "/post/{Slug}"
+@using System.Net.Http.Json
+@using blog_csharp.DTOs
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>@(post?.Title ?? "Post")</PageTitle>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private PostDetail? post;
+    private List<CommentItem> comments = new();
+    private string newCommentContent = "";
+    private string? replyToId;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPost();
+    }
+
+    private async Task LoadPost()
+    {
+        try
+        {
+            var res = await Http.GetFromJsonAsync<ApiResponse<PostDetail>>($"api/posts/{Slug}");
+            if (res?.Data != null)
+            {
+                post = res.Data;
+                await LoadComments();
+            }
+            else error = "Post not found";
+        }
+        catch { error = "Failed to load post"; }
+    }
+
+    private async Task LoadComments()
+    {
+        try
+        {
+            var res = await Http.GetFromJsonAsync<ApiResponse<PagedData<CommentItem>>>($"api/posts/{post?.Id}/comments?pageSize=100");
+            if (res?.Data != null) comments = res.Data.List;
+        }
+        catch { }
+    }
+
+    private async Task PostComment()
+    {
+        if (string.IsNullOrWhiteSpace(newCommentContent)) return;
+        error = null;
+        try
+        {
+            var res = await Http.PostAsJsonAsync($"api/posts/{post!.Id}/comments",
+                new CreateCommentRequest(newCommentContent, replyToId));
+            if (res.IsSuccessStatusCode)
+            {
+                newCommentContent = "";
+                replyToId = null;
+                await LoadPost();
+                await LoadComments();
+            }
+            else
+            {
+                error = "Failed to post comment. Please login.";
+            }
+        }
+        catch { error = "An error occurred"; }
+    }
+
+    private void ReplyTo(string commentId) { replyToId = commentId; newCommentContent = ""; }
+    private void CancelReply() { replyToId = null; newCommentContent = ""; }
+}
+
+@if (post == null && error != null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+else if (post != null)
+{
+    <article>
+        @if (!string.IsNullOrEmpty(post.Cover))
+        {
+            <img src="@post.Cover" class="img-fluid rounded mb-3" alt="@post.Title" />
+        }
+        <h1>@post.Title</h1>
+        <div class="text-muted mb-3">
+            By @post.Author?.Username · @post.PublishedAt?.ToString("yyyy-MM-dd HH:mm")
+            · 👁 @post.ViewCount · 💬 @post.CommentCount
+            @if (post.Category != null)
+            {
+                <span> · <a href="/category/@post.Category.Slug">@post.Category.Name</a></span>
+            }
+        </div>
+        @if (post.Tags.Count > 0)
+        {
+            <div class="mb-3">
+                @foreach (var tag in post.Tags)
+                {
+                    <a href="/tag/@tag.Slug" class="badge bg-secondary text-decoration-none me-1">@tag.Name</a>
+                }
+            </div>
+        }
+        <hr />
+        <div class="post-content">
+            @((MarkupString)Markdig.Markdown.ToHtml(post.Content))
+        </div>
+    </article>
+
+    <div class="mt-4">
+        @if (post.PrevPost != null)
+        {
+            <a href="/post/@post.PrevPost.Slug" class="btn btn-outline-secondary me-2">← @post.PrevPost.Title</a>
+        }
+        @if (post.NextPost != null)
+        {
+            <a href="/post/@post.NextPost.Slug" class="btn btn-outline-secondary">@post.NextPost.Title →</a>
+        }
+    </div>
+
+    <hr />
+    <h3>Comments (@post.CommentCount)</h3>
+
+    <div class="mb-3">
+        @if (replyToId != null)
+        {
+            <div class="alert alert-info">
+                Replying to a comment
+                <button class="btn btn-sm btn-link" @onclick="CancelReply">Cancel</button>
+            </div>
+        }
+        <textarea class="form-control" rows="3" @bind="newCommentContent" placeholder="Write a comment..."></textarea>
+        <button class="btn btn-primary mt-2" @onclick="PostComment">Submit</button>
+        @if (error != null)
+        {
+            <div class="text-danger mt-1">@error</div>
+        }
+    </div>
+
+    @foreach (var comment in comments)
+    {
+        <CommentNode Item="comment" OnReply="ReplyTo" />
+    }
+}

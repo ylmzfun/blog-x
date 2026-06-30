@@ -1,0 +1,73 @@
+@page "/register"
+@using System.Net.Http.Json
+@using blog_csharp.DTOs
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Register</PageTitle>
+
+@code {
+    private string username = "";
+    private string email = "";
+    private string password = "";
+    private string? error;
+    private string? success;
+    private bool loading;
+
+    private async Task HandleRegister()
+    {
+        error = null;
+        success = null;
+        loading = true;
+        try
+        {
+            var res = await Http.PostAsJsonAsync("api/auth/register",
+                new RegisterRequest(username, email, password));
+            if (res.IsSuccessStatusCode)
+            {
+                success = "Registration successful! Redirecting to login...";
+                await Task.Delay(1500);
+                Nav.NavigateTo("/login");
+            }
+            else
+            {
+                var err = await res.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                error = err?.Message ?? "Registration failed";
+            }
+        }
+        catch { error = "An error occurred"; }
+        finally { loading = false; }
+    }
+}
+
+<h2>Register</h2>
+<div class="row">
+    <div class="col-md-6">
+        @if (error != null)
+        {
+            <div class="alert alert-danger">@error</div>
+        }
+        @if (success != null)
+        {
+            <div class="alert alert-success">@success</div>
+        }
+        <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control" @bind="username" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" @bind="email" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" @bind="password" />
+        </div>
+        <button class="btn btn-primary" @onclick="HandleRegister" disabled="@loading">
+            @(loading ? "Registering..." : "Register")
+        </button>
+        <p class="mt-2">
+            Already have an account? <a href="/login">Login</a>
+        </p>
+    </div>
+</div>

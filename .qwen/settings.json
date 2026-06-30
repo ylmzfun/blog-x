@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(dotnet *)",
+      "Bash(mkdir *)",
+      "Bash(rm *)",
+      "Bash(do *)",
+      "Bash(done)",
+      "Bash(mv *)",
+      "Bash(cat)",
+      "Bash(@page *)",
+      "Bash(@using *)",
+      "Bash(@inject *)",
+      "Bash(management)",
+      "Bash(management *)",
+      "Bash(razoreof)",
+      "Bash(timeout *)",
+      "Bash(true)"
+    ]
+  },
+  "$version": 4
+}

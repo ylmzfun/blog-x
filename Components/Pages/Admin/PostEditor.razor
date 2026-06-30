@@ -1,0 +1,161 @@
+@page "/admin/posts/new"
+@page "/admin/posts/{Id}/edit"
+@using System.Net.Http.Json
+@using blog_csharp.DTOs
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>@(Id == null ? "New Post" : "Edit Post")</PageTitle>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    private string title = "", slug = "", content = "", summary = "", cover = "";
+    private string? categoryId;
+    private List<string> tagIds = new();
+    private string status = "draft";
+    private string? error;
+    private string? success;
+
+    private List<CategoryItem> categories = new();
+    private List<TagItem> tags = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var catRes = await Http.GetFromJsonAsync<ApiResponse<List<CategoryItem>>>("api/categories");
+            if (catRes?.Data != null) categories = catRes.Data;
+        }
+        catch { }
+        try
+        {
+            var tagRes = await Http.GetFromJsonAsync<ApiResponse<List<TagItem>>>("api/tags");
+            if (tagRes?.Data != null) tags = tagRes.Data;
+        }
+        catch { }
+
+        if (!string.IsNullOrEmpty(Id))
+        {
+            // Load existing post for editing
+            try
+            {
+                var res = await Http.GetFromJsonAsync<ApiResponse<PostDetail>>($"api/posts/{Id}");
+                if (res?.Data is PostDetail p)
+                {
+                    title = p.Title;
+                    slug = p.Slug;
+                    content = p.Content;
+                    summary = p.Summary ?? "";
+                    cover = p.Cover ?? "";
+                    categoryId = p.Category?.Id;
+                    tagIds = p.Tags.Select(t => t.Id).ToList();
+                    status = p.Status;
+                }
+            }
+            catch { }
+        }
+    }
+
+    private async Task Save()
+    {
+        error = null;
+        success = null;
+        try
+        {
+            HttpResponseMessage res;
+            if (string.IsNullOrEmpty(Id))
+            {
+                res = await Http.PostAsJsonAsync("api/posts", new CreatePostRequest(
+                    title, string.IsNullOrEmpty(slug) ? null : slug, content,
+                    string.IsNullOrEmpty(summary) ? null : summary,
+                    string.IsNullOrEmpty(cover) ? null : cover,
+                    categoryId, tagIds.Count > 0 ? tagIds : null, status));
+            }
+            else
+            {
+                res = await Http.PutAsJsonAsync($"api/posts/{Id}", new UpdatePostRequest(
+                    title, string.IsNullOrEmpty(slug) ? null : slug, content,
+                    string.IsNullOrEmpty(summary) ? null : summary,
+                    string.IsNullOrEmpty(cover) ? null : cover,
+                    categoryId, tagIds.Count > 0 ? tagIds : null, status));
+            }
+
+            if (res.IsSuccessStatusCode)
+            {
+                success = "Saved!";
+                Nav.NavigateTo("/admin/posts");
+            }
+            else
+            {
+                var err = await res.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                error = err?.Message ?? "Save failed";
+            }
+        }
+        catch { error = "An error occurred"; }
+    }
+
+    private void ToggleTag(string tagId)
+    {
+        if (tagIds.Contains(tagId)) tagIds.Remove(tagId);
+        else tagIds.Add(tagId);
+    }
+}
+
+<h2>@(Id == null ? "New Post" : "Edit Post")</h2>
+
+@if (error != null) { <div class="alert alert-danger">@error</div> }
+@if (success != null) { <div class="alert alert-success">@success</div> }
+
+<div class="mb-3">
+    <label class="form-label">Title</label>
+    <input type="text" class="form-control" @bind="title" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Slug</label>
+    <input type="text" class="form-control" @bind="slug" placeholder="Auto-generated if empty" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Content (Markdown)</label>
+    <textarea class="form-control" rows="15" @bind="content"></textarea>
+</div>
+<div class="mb-3">
+    <label class="form-label">Summary</label>
+    <input type="text" class="form-control" @bind="summary" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Cover URL</label>
+    <input type="text" class="form-control" @bind="cover" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Category</label>
+    <select class="form-select" @bind="categoryId">
+        <option value="">None</option>
+        @foreach (var c in categories)
+        {
+            <option value="@c.Id">@c.Name</option>
+        }
+    </select>
+</div>
+<div class="mb-3">
+    <label class="form-label">Tags</label>
+    <div>
+        @foreach (var t in tags)
+        {
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" checked="@tagIds.Contains(t.Id)"
+                       @onchange="() => ToggleTag(t.Id)" />
+                <label class="form-check-label">@t.Name</label>
+            </div>
+        }
+    </div>
+</div>
+<div class="mb-3">
+    <label class="form-label">Status</label>
+    <select class="form-select" @bind="status">
+        <option value="draft">Draft</option>
+        <option value="published">Published</option>
+    </select>
+</div>
+<button class="btn btn-primary me-2" @onclick="Save">Save</button>
+<a href="/admin/posts" class="btn btn-secondary">Cancel</a>

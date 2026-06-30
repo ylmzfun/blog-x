@@ -1,0 +1,134 @@
+@page "/admin/categories"
+@using System.Net.Http.Json
+@using blog_csharp.DTOs
+@inject HttpClient Http
+
+<PageTitle>Category Management</PageTitle>
+
+@code {
+    private List<CategoryItem> categories = new();
+    private string name = "", slug = "", description = "";
+    private string? editId;
+    private string? error;
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        try
+        {
+            var res = await Http.GetFromJsonAsync<ApiResponse<List<CategoryItem>>>("api/categories");
+            if (res?.Data != null) categories = res.Data;
+        }
+        catch { }
+    }
+
+    private async Task Create()
+    {
+        error = null;
+        try
+        {
+            var res = await Http.PostAsJsonAsync("api/categories", new CreateCategoryRequest(name, slug, description));
+            if (res.IsSuccessStatusCode)
+            {
+                name = slug = description = "";
+                await Load();
+            }
+            else
+            {
+                var err = await res.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                error = err?.Message ?? "Failed";
+            }
+        }
+        catch { error = "An error occurred"; }
+    }
+
+    private void Edit(CategoryItem c)
+    {
+        editId = c.Id;
+        name = c.Name;
+        slug = c.Slug;
+        description = c.Description ?? "";
+    }
+
+    private async Task Update()
+    {
+        error = null;
+        try
+        {
+            var res = await Http.PutAsJsonAsync($"api/categories/{editId}",
+                new UpdateCategoryRequest(name, slug, description));
+            if (res.IsSuccessStatusCode)
+            {
+                editId = null;
+                name = slug = description = "";
+                await Load();
+            }
+            else
+            {
+                var err = await res.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                error = err?.Message ?? "Failed";
+            }
+        }
+        catch { error = "An error occurred"; }
+    }
+
+    private async Task Delete(string id)
+    {
+        try
+        {
+            await Http.DeleteAsync($"api/categories/{id}");
+            await Load();
+        }
+        catch { }
+    }
+}
+
+<h2>Category Management</h2>
+
+@if (error != null) { <div class="alert alert-danger">@error</div> }
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5>@(editId != null ? "Edit" : "New") Category</h5>
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <input type="text" class="form-control" placeholder="Name" @bind="name" />
+            </div>
+            <div class="col-md-4 mb-2">
+                <input type="text" class="form-control" placeholder="Slug" @bind="slug" />
+            </div>
+            <div class="col-md-4 mb-2">
+                <input type="text" class="form-control" placeholder="Description" @bind="description" />
+            </div>
+        </div>
+        <button class="btn btn-primary me-2" @onclick='async () => { if (editId != null) await Update(); else await Create(); }'>
+            @(editId != null ? "Update" : "Create")
+        </button>
+        @if (editId != null)
+        {
+            <button class="btn btn-secondary" @onclick='() => { editId = null; name = slug = description = ""; }'>Cancel</button>
+        }
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr><th>Name</th><th>Slug</th><th>Description</th><th>Posts</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var c in categories)
+        {
+            <tr>
+                <td>@c.Name</td>
+                <td>@c.Slug</td>
+                <td>@c.Description</td>
+                <td>@c.PostCount</td>
+                <td>
+                    <button class="btn btn-sm btn-primary me-1" @onclick="() => Edit(c)">Edit</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => Delete(c.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

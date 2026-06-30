@@ -1,0 +1,63 @@
+@page "/login"
+@using System.Net.Http.Json
+@using blog_csharp.DTOs
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Login</PageTitle>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string? error;
+    private bool loading;
+
+    private async Task HandleLogin()
+    {
+        error = null;
+        loading = true;
+        try
+        {
+            var res = await Http.PostAsJsonAsync("api/auth/login", new LoginRequest(email, password));
+            if (res.IsSuccessStatusCode)
+            {
+                var result = await res.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>();
+                if (result?.Data != null)
+                {
+                    Nav.NavigateTo("/", forceLoad: true);
+                }
+            }
+            else
+            {
+                var err = await res.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                error = err?.Message ?? "Login failed";
+            }
+        }
+        catch { error = "An error occurred"; }
+        finally { loading = false; }
+    }
+}
+
+<h2>Login</h2>
+<div class="row">
+    <div class="col-md-6">
+        @if (error != null)
+        {
+            <div class="alert alert-danger">@error</div>
+        }
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" @bind="email" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" @bind="password" />
+        </div>
+        <button class="btn btn-primary" @onclick="HandleLogin" disabled="@loading">
+            @(loading ? "Logging in..." : "Login")
+        </button>
+        <p class="mt-2">
+            Don't have an account? <a href="/register">Register</a>
+        </p>
+    </div>
+</div>
