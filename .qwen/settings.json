@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python *)",
+      "Bash(.venv/bin/pip *)",
+      "Bash(venv/bin/pip *)",
+      "Bash(python3 *)",
+      "Bash(rm *)",
+      "Bash(mkdir *)",
+      "Bash(.venv/bin/django-admin *)",
+      "Bash(true)",
+      "Bash(curl *)",
+      "Bash(pkill *)",
+      "Bash(sleep *)"
+    ]
+  },
+  "$version": 4
+}
