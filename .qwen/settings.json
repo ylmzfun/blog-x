@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Agent(Explore)",
+      "Bash(php *)",
+      "Bash(sqlite3 *)",
+      "Bash(./vendor/bin/pint *)"
+    ]
+  },
+  "$version": 4
+}
