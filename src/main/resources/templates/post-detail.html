@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(content=~{::content}, title=${post.title}, description=${post.summary})}">
+<th:block th:fragment="content">
+
+    <article class="post-detail">
+        <h1 th:text="${post.title}">Title</h1>
+        <div class="meta">
+            <span th:text="${post.author?.username}">Author</span>
+            <span th:text="${#temporals.format(post.publishedAt, 'yyyy-MM-dd HH:mm')}">Date</span>
+            <span th:text="${post.viewCount} + ' 阅读'">0 阅读</span>
+            <span th:text="${post.commentCount} + ' 评论'">0 评论</span>
+            <th:block th:if="${post.category}">
+                <a th:href="@{/category/{slug}(slug=${post.category.slug})}" class="tag"
+                   th:text="${post.category.name}">Cat</a>
+            </th:block>
+        </div>
+        <div th:if="${post.cover}">
+            <img th:src="${post.cover}" style="width:100%;max-height:400px;object-fit:cover;border-radius:var(--radius);margin-bottom:24px;" alt="Cover">
+        </div>
+        <div class="content" th:utext="${post.content}">
+            Content rendered here
+        </div>
+        <div style="margin-top:20px;">
+            <a th:each="tag : ${post.tags}" th:href="@{/tag/{slug}(slug=${tag.slug})}" class="tag"
+               th:text="${tag.name}">Tag</a>
+        </div>
+    </article>
+
+    <!-- Comments -->
+    <section style="margin-top: 40px;">
+        <h3 style="margin-bottom: 20px;">评论 (<span th:text="${comments.total}">0</span>)</h3>
+
+        <div th:each="comment : ${comments.list}" class="comment">
+            <div>
+                <span class="author" th:text="${comment.author?.username}">User</span>
+                <span class="time" th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">Time</span>
+            </div>
+            <div class="body" th:text="${comment.content}">Content</div>
+            <div style="margin-top: 4px;">
+                <a th:if="${session.user} != null" class="reply-btn"
+                   th:href="'#reply-form'"
+                   onclick="document.getElementById('parentId').value=[[${comment.id}]];document.getElementById('reply-to').innerText='回复 @'+[[${comment.author?.username}]];document.getElementById('reply-form').scrollIntoView();">
+                    回复
+                </a>
+            </div>
+            <div class="children">
+                <div th:each="child : ${comment.children}" class="comment">
+                    <div>
+                        <span class="author" th:text="${child.author?.username}">User</span>
+                        <span class="time" th:text="${#temporals.format(child.createdAt, 'yyyy-MM-dd HH:mm')}">Time</span>
+                    </div>
+                    <div class="body" th:text="${child.content}">Content</div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(comments.list)}" style="text-align:center;padding:20px;color:var(--text-muted);">
+            暂无评论
+        </div>
+
+        <th:block th:replace="~{fragments/pagination :: pagination(
+            baseUrl=@{/post/{slug}(slug=${post.slug})}, page=${comments.page}, totalPages=${commentPages})}"></th:block>
+    </section>
+
+    <!-- Reply Form -->
+    <div th:if="${session.user} != null" id="reply-form" class="card" style="margin-top: 20px;">
+        <h4 style="margin-bottom: 12px;">
+            发表评论 <span id="reply-to" style="font-weight:400;color:var(--text-muted);font-size:.85rem;"></span>
+        </h4>
+        <form th:action="@{/post/{slug}/comment(slug=${post.slug})}" method="post">
+            <input type="hidden" name="parentId" id="parentId" value="">
+            <div class="form-group">
+                <textarea name="content" required placeholder="写下你的评论..." rows="4"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">发布评论</button>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('parentId').value='';document.getElementById('reply-to').innerText='';" style="margin-left:8px;">取消回复</button>
+        </form>
+    </div>
+
+    <div th:unless="${session.user} != null" class="card" style="margin-top:20px;text-align:center;">
+        <a href="/login">登录</a> 后发表评论
+    </div>
+
+</th:block>
+</html>

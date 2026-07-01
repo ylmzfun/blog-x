@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' | X-Blog Admin'">Admin</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="logo">X-<span>Blog</span> <span style="font-size:.75rem;color:var(--text-muted);">Admin</span></a>
+    <nav>
+        <a href="/">前台首页</a>
+        <a href="/profile">个人中心</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<div class="admin-layout">
+    <aside class="sidebar">
+        <a href="/admin" th:classappend="${menu} == 'dashboard' ? 'active'">仪表盘</a>
+        <a href="/admin/posts" th:classappend="${menu} == 'posts' ? 'active'">文章管理</a>
+        <a href="/admin/posts/new" th:classappend="${menu} == 'post-new' ? 'active'">新建文章</a>
+        <a href="/admin/categories" th:classappend="${menu} == 'categories' ? 'active'">分类管理</a>
+        <a href="/admin/comments" th:classappend="${menu} == 'comments' ? 'active'">评论管理</a>
+        <a href="/admin/stats" th:classappend="${menu} == 'stats' ? 'active'">数据统计</a>
+    </aside>
+    <main class="main">
+        <th:block th:replace="~{::content}"></th:block>
+    </main>
+</div>
+
+</body>
+</html>

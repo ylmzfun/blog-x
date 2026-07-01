@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(content=~{::content}, title='标签：' + ${slug})}">
+<th:block th:fragment="content">
+
+    <h1 class="page-title">标签：[[${slug}]]</h1>
+
+    <div th:each="post : ${posts.list}" class="card post-card">
+        <h2><a th:href="@{/post/{slug}(slug=${post.slug})}" th:text="${post.title}">Title</a></h2>
+        <div class="meta">
+            <span th:text="${post.author?.username}">Author</span>
+            <span th:text="${#temporals.format(post.publishedAt, 'yyyy-MM-dd')}">Date</span>
+            <span th:text="${post.viewCount} + ' 阅读'">0 阅读</span>
+        </div>
+        <p class="summary" th:if="${post.summary}" th:text="${post.summary}">Summary</p>
+    </div>
+
+    <div th:if="${#lists.isEmpty(posts.list)}" style="text-align:center;padding:60px 0;color:var(--text-muted);">
+        该标签下暂无文章
+    </div>
+
+    <th:block th:replace="~{fragments/pagination :: pagination(
+        baseUrl=@{/tag/{slug}(slug=${slug})}, page=${posts.page}, totalPages=${pages})}"></th:block>
+
+</th:block>
+</html>

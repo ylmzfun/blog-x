@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin-layout :: html(content=~{::content}, title=${post} != null ? '编辑文章' : '新建文章', menu='post-new')}">
+<th:block th:fragment="content">
+
+    <h1 class="page-title" th:text="${post} != null ? '编辑文章' : '新建文章'">新建文章</h1>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <form th:action="${post} != null ? @{/admin/posts/{id}/edit(id=${post.id})} : @{/admin/posts/new}"
+          method="post" class="card">
+        <div class="form-group">
+            <label>标题</label>
+            <input type="text" name="title" th:value="${post?.title}" required placeholder="文章标题">
+        </div>
+        <div class="form-group">
+            <label>摘要</label>
+            <input type="text" name="summary" th:value="${post?.summary}" placeholder="文章摘要（可选）">
+        </div>
+        <div class="form-group">
+            <label>内容 (Markdown)</label>
+            <textarea name="content" required rows="20" placeholder="支持 Markdown 格式"
+                      th:text="${post?.content}"></textarea>
+        </div>
+        <div class="form-group">
+            <label>封面图片 URL</label>
+            <input type="text" name="cover" th:value="${post?.cover}" placeholder="https://...">
+        </div>
+        <div style="display:flex;gap:16px;">
+            <div class="form-group" style="flex:1;">
+                <label>分类</label>
+                <select name="categoryId">
+                    <option value="">无分类</option>
+                    <option th:each="cat : ${categories}" th:value="${cat.id}"
+                            th:text="${cat.name}"
+                            th:selected="${post?.category?.id} == ${cat.id}">Category</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label>标签</label>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;padding-top:8px;">
+                    <label th:each="tag : ${tags}" style="font-weight:400;font-size:.85rem;">
+                        <input type="checkbox" name="tagIds" th:value="${tag.id}"
+                               th:checked="${post?.tags} != null and ${#lists.contains(post.tags.![id], tag.id)}">
+                        [[${tag.name}]]
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="radio" name="status" value="PUBLISHED"
+                       th:checked="${post?.status} == null or ${post?.status} == 'PUBLISHED'"> 发布
+            </label>
+            <label style="margin-left:20px;">
+                <input type="radio" name="status" value="DRAFT"
+                       th:checked="${post?.status} == 'DRAFT'"> 草稿
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary" th:text="${post} != null ? '保存修改' : '发布文章'">发布</button>
+        <a href="/admin/posts" class="btn btn-outline" style="margin-left:8px;">取消</a>
+    </form>
+
+</th:block>
+</html>

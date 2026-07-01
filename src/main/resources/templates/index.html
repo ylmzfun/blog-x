@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(content=~{::content}, title=${title}, description='X-Blog 首页')}">
+<th:block th:fragment="content">
+
+    <!-- Pinned Posts -->
+    <div th:if="${not #lists.isEmpty(pinnedPosts)}">
+        <div th:each="post : ${pinnedPosts}" class="card post-card">
+            <span class="pinned-badge">置顶</span>
+            <h2><a th:href="@{/post/{slug}(slug=${post.slug})}" th:text="${post.title}">Title</a></h2>
+            <div class="meta">
+                <span th:text="${post.author?.username}">Author</span>
+                <span th:text="${#temporals.format(post.publishedAt, 'yyyy-MM-dd')}">Date</span>
+                <span th:text="${post.viewCount} + ' 阅读'">0 阅读</span>
+                <span th:text="${post.commentCount} + ' 评论'">0 评论</span>
+            </div>
+            <p class="summary" th:if="${post.summary}" th:text="${post.summary}">Summary</p>
+        </div>
+    </div>
+
+    <!-- Category filter -->
+    <div class="category-list">
+        <a href="/" class="category-item" th:classappend="${currentCategory} == null ? 'active'">
+            全部
+        </a>
+        <a th:each="cat : ${categories}"
+           th:href="@{/category/{slug}(slug=${cat.slug})}"
+           th:classappend="${currentCategory} == ${cat.slug} ? 'active'"
+           class="category-item">
+            [[${cat.name}]] <span class="count">[[${cat.postCount}]]</span>
+        </a>
+    </div>
+
+    <!-- Post List -->
+    <div th:each="post : ${posts.list}" class="card post-card">
+        <img th:if="${post.cover}" th:src="${post.cover}" class="cover" alt="Cover">
+        <h2><a th:href="@{/post/{slug}(slug=${post.slug})}" th:text="${post.title}">Title</a></h2>
+        <div class="meta">
+            <span th:text="${post.author?.username}">Author</span>
+            <span th:text="${#temporals.format(post.publishedAt, 'yyyy-MM-dd')}">Date</span>
+            <span th:text="${post.viewCount} + ' 阅读'">0 阅读</span>
+            <span th:text="${post.commentCount} + ' 评论'">0 评论</span>
+            <th:block th:if="${post.category}">
+                <a th:href="@{/category/{slug}(slug=${post.category.slug})}" class="tag"
+                   th:text="${post.category.name}">Cat</a>
+            </th:block>
+        </div>
+        <p class="summary" th:if="${post.summary}" th:text="${post.summary}">Summary</p>
+        <div style="margin-top:8px;">
+            <a th:each="tag : ${post.tags}" th:href="@{/tag/{slug}(slug=${tag.slug})}" class="tag"
+               th:text="${tag.name}">Tag</a>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(posts.list)}" style="text-align:center;padding:60px 0;color:var(--text-muted);">
+        暂无文章
+    </div>
+
+    <th:block th:replace="~{fragments/pagination :: pagination(
+        baseUrl=@{/(page=${posts.page})}, page=${posts.page}, totalPages=${pages})}"></th:block>
+
+</th:block>
+</html>

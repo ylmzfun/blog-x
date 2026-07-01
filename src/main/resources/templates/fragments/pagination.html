@@ -1,0 +1,14 @@
+<th:block th:fragment="pagination(baseUrl, page, totalPages)">
+    <div class="pagination" th:if="${totalPages} > 1">
+        <a th:if="${page} > 1" th:href="@{${baseUrl}(page=${page - 1})}" class="btn btn-outline btn-sm">上一页</a>
+        <span th:if="${page} <= 1" class="btn btn-outline btn-sm disabled">上一页</span>
+
+        <th:block th:each="i : ${#numbers.sequence(1, totalPages)}">
+            <a th:if="${i} == ${page}" th:href="@{${baseUrl}(page=${i})}" class="active">[[${i}]]</a>
+            <a th:unless="${i} == ${page}" th:href="@{${baseUrl}(page=${i})}">[[${i}]]</a>
+        </th:block>
+
+        <a th:if="${page} < ${totalPages}" th:href="@{${baseUrl}(page=${page} + 1)}" class="btn btn-outline btn-sm">下一页</a>
+        <span th:if="${page} >= ${totalPages}" class="btn btn-outline btn-sm disabled">下一页</span>
+    </div>
+</th:block>

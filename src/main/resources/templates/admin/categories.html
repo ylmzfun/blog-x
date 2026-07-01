@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin-layout :: html(content=~{::content}, title='分类管理', menu='categories')}">
+<th:block th:fragment="content">
+
+    <h1 class="page-title">分类管理</h1>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+    <!-- Create Form -->
+    <form th:action="@{/admin/categories}" method="post" class="card" style="margin-bottom:24px;">
+        <h3 style="margin-bottom:12px;">新建分类</h3>
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label>名称</label>
+                <input type="text" name="name" required placeholder="分类名称">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Slug</label>
+                <input type="text" name="slug" required placeholder="url-friendly-name">
+            </div>
+            <div class="form-group" style="margin-bottom:0;flex:1;">
+                <label>描述</label>
+                <input type="text" name="description" placeholder="分类描述（可选）">
+            </div>
+            <button type="submit" class="btn btn-primary">创建</button>
+        </div>
+    </form>
+
+    <!-- List -->
+    <table class="table" th:if="${not #lists.isEmpty(categories)}">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>名称</th>
+                <th>Slug</th>
+                <th>描述</th>
+                <th>文章数</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="cat : ${categories}">
+                <td th:text="${cat.id}">1</td>
+                <td th:text="${cat.name}">Name</td>
+                <td th:text="${cat.slug}">slug</td>
+                <td th:text="${cat.description} ?: '-'">Desc</td>
+                <td th:text="${cat.postCount}">0</td>
+                <td th:text="${#temporals.format(cat.createdAt, 'yyyy-MM-dd')}">Date</td>
+                <td>
+                    <form th:action="@{/admin/categories/{id}/delete(id=${cat.id})}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('确定删除此分类吗？')">删除</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div th:if="${#lists.isEmpty(categories)}" style="text-align:center;padding:40px 0;color:var(--text-muted);">
+        暂无分类
+    </div>
+
+</th:block>
+</html>

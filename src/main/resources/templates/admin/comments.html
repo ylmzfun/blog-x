@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin-layout :: html(content=~{::content}, title='评论管理', menu='comments')}">
+<th:block th:fragment="content">
+
+    <h1 class="page-title">评论管理</h1>
+
+    <table class="table" th:if="${not #lists.isEmpty(comments.list)}">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>作者</th>
+                <th>内容</th>
+                <th>文章</th>
+                <th>状态</th>
+                <th>时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="comment : ${comments.list}">
+                <td th:text="${comment.id}">1</td>
+                <td th:text="${comment.author?.username}">User</td>
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                    th:text="${comment.content}">Content</td>
+                <td>-</td>
+                <td>
+                    <span th:if="${comment.status} == 'APPROVED'" style="color:#16a34a;">已审核</span>
+                    <span th:if="${comment.status} == 'PENDING'" style="color:#f59e0b;">待审核</span>
+                </td>
+                <td th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">Time</td>
+                <td>
+                    <form th:if="${comment.status} == 'PENDING'"
+                          th:action="@{/admin/comments/{id}/approve(id=${comment.id})}" method="post"
+                          style="display:inline;">
+                        <button type="submit" class="btn btn-primary btn-sm">通过</button>
+                    </form>
+                    <form th:action="@{/admin/comments/{id}/delete(id=${comment.id})}" method="post"
+                          style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('确定删除此评论吗？')">删除</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div th:if="${#lists.isEmpty(comments.list)}" style="text-align:center;padding:40px 0;color:var(--text-muted);">
+        暂无评论
+    </div>
+
+    <th:block th:replace="~{fragments/pagination :: pagination(
+        baseUrl=@{/admin/comments}, page=${comments.page}, totalPages=${pages})}"></th:block>
+
+</th:block>
+</html>

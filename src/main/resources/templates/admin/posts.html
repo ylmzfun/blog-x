@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin-layout :: html(content=~{::content}, title='文章管理', menu='posts')}">
+<th:block th:fragment="content">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h1 class="page-title" style="margin-bottom:0;">文章管理</h1>
+        <a href="/admin/posts/new" class="btn btn-primary">新建文章</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(posts.list)}" style="text-align:center;padding:60px 0;color:var(--text-muted);">
+        暂无文章
+    </div>
+
+    <table class="table" th:if="${not #lists.isEmpty(posts.list)}">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>作者</th>
+                <th>状态</th>
+                <th>分类</th>
+                <th>阅读</th>
+                <th>评论</th>
+                <th>发布时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="post : ${posts.list}">
+                <td th:text="${post.id}">1</td>
+                <td>
+                    <a th:href="@{/post/{slug}(slug=${post.slug})}" th:text="${post.title}">Title</a>
+                    <span th:if="${post.pinned}" class="pinned-badge">置顶</span>
+                </td>
+                <td th:text="${post.author?.username}">Author</td>
+                <td>
+                    <span th:if="${post.status} == 'PUBLISHED'" style="color:#16a34a;">已发布</span>
+                    <span th:if="${post.status} == 'DRAFT'" style="color:#f59e0b;">草稿</span>
+                </td>
+                <td th:text="${post.category?.name} ?: '-'">Cat</td>
+                <td th:text="${post.viewCount}">0</td>
+                <td th:text="${post.commentCount}">0</td>
+                <td th:text="${#temporals.format(post.publishedAt, 'yyyy-MM-dd')}">-</td>
+                <td>
+                    <a th:href="@{/admin/posts/{id}/edit(id=${post.id})}" class="btn btn-outline btn-sm">编辑</a>
+                    <form th:action="@{/admin/posts/{id}/delete(id=${post.id})}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('确定删除这篇文章吗？')">删除</button>
+                    </form>
+                    <form th:action="@{/admin/posts/{id}/pin(id=${post.id})}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-outline btn-sm"
+                                th:text="${post.pinned} ? '取消置顶' : '置顶'">置顶</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <th:block th:replace="~{fragments/pagination :: pagination(
+        baseUrl=@{/admin/posts}, page=${posts.page}, totalPages=${pages})}"></th:block>
+
+</th:block>
+</html>
