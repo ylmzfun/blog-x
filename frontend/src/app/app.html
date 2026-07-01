@@ -1,0 +1,19 @@
+<nav class="navbar">
+  <a routerLink="/" class="navbar-brand">My Blog</a>
+  <div class="navbar-nav">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+    @if (auth.isLoggedIn()) {
+      @if (auth.isAdmin()) {
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
+      <a routerLink="/profile" routerLinkActive="active">Profile</a>
+      <a href="#" (click)="logout($event)">Logout</a>
+    } @else {
+      <a routerLink="/login" routerLinkActive="active">Login</a>
+      <a routerLink="/register" routerLinkActive="active">Register</a>
+    }
+  </div>
+</nav>
+<main class="page">
+  <router-outlet />
+</main>
